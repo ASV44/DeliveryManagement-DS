@@ -1,0 +1,34 @@
+version: "3"
+services:
+
+  #Cassandra Cluster
+  cassandra-seed:
+    image: cassandra:latest
+    ports:
+      - "9042:9042"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    restart: always
+
+  cassandra1:
+    image: cassandra:latest
+    ports:
+      - "9142:9042"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    depends_on:
+      - cassandra-seed
+    restart: always
+
+  cassandra2:
+    image: cassandra:latest
+    ports:
+      - "9242:9042"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    depends_on:
+      - cassandra-seed
+    restart: always

@@ -1,46 +1,48 @@
 version: "3"
 services:
 
-  warehouse:
-    build: ./warehouse
-    ports:
-      - "8080:8080"
-    environment:
-      PORT: 8080
-    depends_on:
-      - cassandra-seed
-      - cassandra1
-      - cassandra2
-    restart: always
+  # warehouse:
+  #   build: ./warehouse
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     PORT: 8080
+  #   depends_on:
+  #     - cassandra-seed
+  #     - cassandra1
+  #     - cassandra2
+  #   restart: always
 
   #Cassandra Cluster
   cassandra-seed:
     image: cassandra:latest
     ports:
       - "9042:9042"
+    expose:
+      - 9042
     environment:
       - "CASSANDRA_SEEDS=cassandra-seed"
       - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
     restart: always
 
-  cassandra1:
-    image: cassandra:latest
-    ports:
-      - "9142:9042"
-    environment:
-      - "CASSANDRA_SEEDS=cassandra-seed"
-      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
-    depends_on:
-      - cassandra-seed
-    restart: always
-
-  cassandra2:
-    image: cassandra:latest
-    ports:
-      - "9242:9042"
-    environment:
-      - "CASSANDRA_SEEDS=cassandra-seed"
-      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
-    depends_on:
-      - cassandra-seed
-    restart: always
+  # cassandra1:
+  #   image: cassandra:latest
+  #   ports:
+  #     - "9142:9042"
+  #   environment:
+  #     - "CASSANDRA_SEEDS=cassandra-seed"
+  #     - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+  #   depends_on:
+  #     - cassandra-seed
+  #   restart: always
+  #
+  # cassandra2:
+  #   image: cassandra:latest
+  #   ports:
+  #     - "9242:9042"
+  #   environment:
+  #     - "CASSANDRA_SEEDS=cassandra-seed"
+  #     - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+  #   depends_on:
+  #     - cassandra-seed
+  #   restart: always

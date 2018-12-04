@@ -7,7 +7,7 @@ import (
 
 const (
 	KEYSPACE = "DeliveryManagement"
-	HOST 	 = "127.0.0.1"
+	HOST 	 = "cassandraSeed"
 )
 
 type Cassandra struct {
@@ -19,7 +19,6 @@ func (db *Cassandra) ConnectToCluster() {
 	// connect to the cluster
 	db.cluster = gocql.NewCluster(HOST)
 	db.cluster.Port = 9042
-	db.cluster.Keyspace = KEYSPACE
 	db.cluster.Consistency = gocql.Quorum
 	db.session, _ = db.cluster.CreateSession()
 	defer db.session.Close()

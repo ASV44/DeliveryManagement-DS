@@ -1,27 +1,27 @@
 version: "3"
 services:
 
-  # warehouse:
-  #   build: ./warehouse
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     PORT: 8080
-  #   depends_on:
-  #     - cassandra-seed
-  #     - cassandra1
-  #     - cassandra2
-  #   restart: always
+  warehouse:
+    build: ./warehouse
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+    depends_on:
+      - cassandraSeed
+      # - cassandra1
+      # - cassandra2
+    restart: always
 
   #Cassandra Cluster
-  cassandra-seed:
+  cassandraSeed:
     image: cassandra:latest
     ports:
       - "9042:9042"
     expose:
       - 9042
     environment:
-      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_SEEDS=cassandraSeed"
       - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
     restart: always
 

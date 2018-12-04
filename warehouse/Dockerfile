@@ -7,9 +7,13 @@ FROM golang:alpine AS builder
 # Install git.
 # Git is required for fetching the dependencies.
 
+ENV SERVICE_NAME DeliveryManagement-DS
+ENV APP /src/${SERVICE_NAME}/
+ENV WORKDIR ${GOPATH}${APP}
+
 RUN apk update && apk add --no-cache git
-COPY . $GOPATH/src/mypackage/myapp/
-WORKDIR $GOPATH/src/mypackage/myapp/
+COPY . WORKDIR
+WORKDIR WORKDIR
 
 # Fetch dependencies.
 # Using go get.

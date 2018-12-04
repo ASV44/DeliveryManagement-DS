@@ -15,24 +15,27 @@ const (
 )
 
 type Server struct {
-	Host           string
-	Port           string
-	ConnectionType string
-	Db 			   *db.Cassandra
+	host           string
+	port           string
+	connectionType string
+	db 			   *db.Cassandra
+	pipeline	   chan string
 }
 
 func (server *Server) Start() {
+	server.pipeline = make(chan string)
 	server.createBasicRoutes()
-	if server.Port == "" {
-		server.Port = DEFAULT_PORT
+	if server.port == "" {
+		server.port = DEFAULT_PORT
 	}
 	go server.run()
 	server.connectDB()
+	server.processPipeline()
 }
 
 func (server *Server) run() {
-	fmt.Println("Server is running on port :", server.Port)
-	var err = http.ListenAndServe(":" + server.Port, nil)
+	fmt.Println("Server is running on port :", server.port)
+	var err = http.ListenAndServe(":" + server.port, nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -40,19 +43,29 @@ func (server *Server) run() {
 }
 
 func (server *Server) connectDB() {
-	server.Db = &db.Cassandra{}
-	server.Db.ConnectToCluster()
+	server.db = &db.Cassandra{}
+	server.db.ConnectToCluster()
+}
+
+func (server *Server) processPipeline() {
+	for {
+		select {
+		case data := <- server.pipeline:
+			fmt.Println(data)
+		}
+	}
 }
 
 func (server *Server) createBasicRoutes() {
-	http.HandleFunc("/", helloWorldHandler)
+	http.HandleFunc("/", server.helloWorldHandler)
 }
 
-func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
+func (server *Server) helloWorldHandler(w http.ResponseWriter, r *http.Request) {
+	server.pipeline <- "request on / route"
 	io.WriteString(w, "Hello world!")
 }
 
 func main() {
-	var server = Server{Host: DEFAULT_HOST, Port: os.Getenv("PORT")}
+	var server = Server{host: DEFAULT_HOST, port: os.Getenv("PORT")}
 	server.Start()
 }

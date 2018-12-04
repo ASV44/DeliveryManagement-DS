@@ -30,7 +30,7 @@ FROM alpine
 
 COPY --from=builder /go/bin/main /go/bin/main
 
-ENV PORT=3001
+ENV PORT=8080
 EXPOSE $PORT
 
 # Run the hello binary.

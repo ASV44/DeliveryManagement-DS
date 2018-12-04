@@ -21,8 +21,11 @@ type Server struct {
 
 func (server *Server) Start() {
 	server.createBasicRoutes()
+	if server.Port == "" {
+		server.Port = DEFAULT_PORT
+	}
 	fmt.Println("Server is running on port :", server.Port)
-	var err = http.ListenAndServe(server.Host+":"+server.Port, nil)
+	var err = http.ListenAndServe(":" + server.Port, nil)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -38,6 +41,6 @@ func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	var server = Server{Host: DEFAULT_HOST, Port: DEFAULT_PORT}
+	var server = Server{Host: DEFAULT_HOST, Port: os.Getenv("PORT")}
 	server.Start()
 }

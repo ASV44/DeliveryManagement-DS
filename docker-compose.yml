@@ -22,9 +22,11 @@ services:
       - 9042
     volumes:
       - "./warehouse/data/db1:/var/lib/cassandra"
+      - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
     environment:
       - "CASSANDRA_SEEDS=cassandraSeed"
       - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    command: "sh /cassandra-init.sh"
     restart: always
 
   cassandra1:
@@ -35,9 +37,11 @@ services:
       - 9042
     volumes:
       - "./warehouse/data/db2:/var/lib/cassandra"
+      - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
     environment:
       - "CASSANDRA_SEEDS=cassandraSeed"
       - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    command: "sh /cassandra-init.sh"
     depends_on:
       - cassandraSeed
     restart: always
@@ -50,9 +54,11 @@ services:
       - 9042
     volumes:
       - "./warehouse/data/db3:/var/lib/cassandra"
+      - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
     environment:
       - "CASSANDRA_SEEDS=cassandraSeed"
       - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    command: "sh /cassandra-init.sh"
     depends_on:
       - cassandraSeed
     restart: always

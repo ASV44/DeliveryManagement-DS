@@ -8,12 +8,13 @@ FROM golang:alpine AS builder
 # Git is required for fetching the dependencies.
 
 ENV SERVICE_NAME DeliveryManagement-DS
-ENV APP /src/${SERVICE_NAME}/
-ENV WORKDIR ${GOPATH}${APP}
+ENV APP ${SERVICE_NAME}/
+ENV WORKDIR ${GOPATH}/${APP}
 
 RUN apk update && apk add --no-cache git
-COPY . WORKDIR
-WORKDIR WORKDIR
+
+COPY . $WORKDIR
+WORKDIR $WORKDIR
 
 # Fetch dependencies.
 # Using go get.
@@ -24,18 +25,19 @@ RUN go get -d -v
 
 RUN go build -o /go/bin/main
 
-############################
-# STEP 2 build a small image
-############################
+###############################################
+# STEP 2 build a small image, production build
+##############################################
 
-FROM alpine
-
-# Copy our static executable.
-
-COPY --from=builder /go/bin/main /go/bin/main
-
-ENV PORT=8080
-EXPOSE $PORT
+# FROM alpine
+#
+# # Copy our static executable.
+#
+# COPY --from=builder /go/bin/main /go/bin/main
+#
+# ENV PORT=8080
+# EXPOSE $PORT
+#
 
 # Run the hello binary.
 ENTRYPOINT ["/go/bin/main"]

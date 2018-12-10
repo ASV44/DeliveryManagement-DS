@@ -2,24 +2,31 @@ package main
 
 import (
 	"./db"
+	"./models"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"github.com/gorilla/mux"
 )
 
 const (
 	DEFAULT_HOST = "localhost"
 	DEFAULT_PORT = "8080"
-	DEFAULT_TYPE = "http"
 )
 
 type Server struct {
 	host           string
 	port           string
-	connectionType string
+	router		   *mux.Router
 	db 			   *db.Cassandra
 	pipeline	   chan string
+}
+
+func main() {
+	var server = Server{host: DEFAULT_HOST, port: os.Getenv("PORT")}
+	server.Start()
 }
 
 func (server *Server) Start() {
@@ -35,7 +42,7 @@ func (server *Server) Start() {
 
 func (server *Server) run() {
 	fmt.Println("Server is running on port :", server.port)
-	var err = http.ListenAndServe(":" + server.port, nil)
+	var err = http.ListenAndServe(":" + server.port, server.router)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -57,15 +64,30 @@ func (server *Server) processPipeline() {
 }
 
 func (server *Server) createBasicRoutes() {
-	http.HandleFunc("/", server.helloWorldHandler)
+	server.router = mux.NewRouter()
+	server.router.HandleFunc("/", server.helloWorldHandler)
+	server.router.HandleFunc("/order", server.addNewOrder).Methods("POST")
 }
 
 func (server *Server) helloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	server.pipeline <- "request on / route"
+	server.pipeline <- "request on '/' route"
 	io.WriteString(w, "Hello world!")
 }
 
-func main() {
-	var server = Server{host: DEFAULT_HOST, port: os.Getenv("PORT")}
-	server.Start()
+func (server *Server) addNewOrder(w http.ResponseWriter, req *http.Request) {
+	server.pipeline <- "POST of new order"
+	decoder := json.NewDecoder(req.Body)
+	var order models.Order
+	err := decoder.Decode(&order)
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.db.AddOrder(order)
+	var message = "Successfully added order : "
+	if err != nil {
+		message = "Error while adding order : "
+	}
+	fmt.Println(message + order.AwbNumber, err)
+	io.WriteString(w, message + order.AwbNumber + "\n" + err.Error())
 }

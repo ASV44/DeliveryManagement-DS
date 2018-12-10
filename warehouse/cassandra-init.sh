@@ -5,7 +5,7 @@ CQL="CREATE KEYSPACE IF NOT EXISTS $KEYSPACE WITH replication = {'class' : 'Simp
      CREATE TABLE IF NOT EXISTS $KEYSPACE.$TABLE (
         order_id text,
      		awb_number text,
-     		allow_open_parcel text,
+     		allow_open_parcel boolean,
      		created_date timestamp,
      		labels list<text>,
      		latitude float,
@@ -22,7 +22,7 @@ CQL="CREATE KEYSPACE IF NOT EXISTS $KEYSPACE WITH replication = {'class' : 'Simp
      		shipper_name text,
      		shipper_phone text,
      		status_group_id int,
-     		todayImportant boolean,
+     		today_important boolean,
      		PRIMARY KEY ((order_id, awb_number), created_date));"
 
 until echo $CQL | cqlsh

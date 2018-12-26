@@ -23,8 +23,6 @@ func (db *Cassandra) ConnectToCluster() {
 	db.cluster.Keyspace = KEYSPACE
 	db.cluster.Consistency = gocql.Quorum
 	db.session, _ = db.cluster.CreateSession()
-	//defer db.session.Close()
-
 	db.initSession()
 }
 
@@ -32,6 +30,7 @@ func (db *Cassandra) initSession() {
 	var err error
 	if db.session == nil || db.session.Closed() {
 		db.session, err = db.cluster.CreateSession()
+		db.session.Close()
 	}
 	if err != nil {
 		fmt.Println(err)

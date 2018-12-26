@@ -84,10 +84,11 @@ func (server *Server) addNewOrder(w http.ResponseWriter, req *http.Request) {
 	}
 
 	err = server.db.AddOrder(order)
-	var message = "Successfully added order : "
+	var message = "Successfully added order : %s"
 	if err != nil {
-		message = "Error while adding order : "
+		message = "Error while adding order : %s " + err.Error()
 	}
-	fmt.Println(message + order.AwbNumber, err)
-	io.WriteString(w, message + order.AwbNumber + "\n" + err.Error())
+	message = fmt.Sprintf(message, order.AwbNumber)
+	fmt.Println(message)
+	io.WriteString(w, message)
 }

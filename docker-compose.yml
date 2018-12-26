@@ -9,8 +9,8 @@ services:
       PORT: 8080
     depends_on:
       - cassandraSeed
-      # - cassandra1
-      # - cassandra2
+      - cassandra1
+      - cassandra2
     restart: always
 
   #Cassandra Cluster
@@ -29,36 +29,36 @@ services:
     command: "sh /cassandra-init.sh"
     restart: always
 
-  # cassandra1:
-  #   image: cassandra:latest
-  #   ports:
-  #     - "9142:9042"
-  #   expose:
-  #     - 9042
-  #   volumes:
-  #     - "./warehouse/data/db2:/var/lib/cassandra"
-  #     - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
-  #   environment:
-  #     - "CASSANDRA_SEEDS=cassandraSeed"
-  #     - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
-  #   command: "sh /cassandra-init.sh"
-  #   depends_on:
-  #     - cassandraSeed
-  #   restart: always
-  #
-  # cassandra2:
-  #   image: cassandra:latest
-  #   ports:
-  #     - "9242:9042"
-  #   expose:
-  #     - 9042
-  #   volumes:
-  #     - "./warehouse/data/db3:/var/lib/cassandra"
-  #     - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
-  #   environment:
-  #     - "CASSANDRA_SEEDS=cassandraSeed"
-  #     - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
-  #   command: "sh /cassandra-init.sh"
-  #   depends_on:
-  #     - cassandraSeed
-  #   restart: always
+  cassandra1:
+    image: cassandra:latest
+    ports:
+      - "9142:9042"
+    expose:
+      - 9042
+    volumes:
+      - "./warehouse/data/db2:/var/lib/cassandra"
+      - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
+    environment:
+      - "CASSANDRA_SEEDS=cassandraSeed"
+      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    command: "sh /cassandra-init.sh"
+    depends_on:
+      - cassandraSeed
+    restart: always
+
+  cassandra2:
+    image: cassandra:latest
+    ports:
+      - "9242:9042"
+    expose:
+      - 9042
+    volumes:
+      - "./warehouse/data/db3:/var/lib/cassandra"
+      - "./warehouse/cassandra-init.sh:/cassandra-init.sh"
+    environment:
+      - "CASSANDRA_SEEDS=cassandraSeed"
+      - "CASSANDRA_CLUSTER_NAME=Delivery Cluster"
+    command: "sh /cassandra-init.sh"
+    depends_on:
+      - cassandraSeed
+    restart: always

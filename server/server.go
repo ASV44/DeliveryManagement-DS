@@ -1,10 +1,10 @@
 package server
 
 import (
-	"../db"
-	"../models"
 	"encoding/json"
 	"fmt"
+	"github.com/ASV44/DeliveryManagement-DS/db"
+	"github.com/ASV44/DeliveryManagement-DS/models"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -19,12 +19,11 @@ const (
 type server struct {
 	host     string
 	port     string
-	router   *mux.Router
 	db       *db.Cassandra
 	pipeline chan string
 }
 
-func New(host string, port string) server {
+func New(host string, port string, db *db.Cassandra) server {
 	if host == "" {
 		host = DefaultHost
 	}
@@ -33,31 +32,26 @@ func New(host string, port string) server {
 	}
 
 	return server{
-		host: host,
-		port: port,
+		host:     host,
+		port:     port,
+		db:       db,
+		pipeline: make(chan string),
 	}
 }
 
 func (server *server) Start() {
-	server.pipeline = make(chan string)
-	server.createBasicRoutes()
-	go server.run()
-	server.connectDB()
+	router := server.createBasicRoutes()
+	go server.run(router)
 	server.processPipeline()
 }
 
-func (server *server) run() {
-	fmt.Println("server is running on port :", server.port)
-	var err = http.ListenAndServe(":"+server.port, server.router)
+func (server *server) run(router *mux.Router) {
+	fmt.Println("warehouse is running on port :", server.port)
+	var err = http.ListenAndServe(":"+server.port, router)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-}
-
-func (server *server) connectDB() {
-	server.db = &db.Cassandra{}
-	server.db.ConnectToCluster()
 }
 
 func (server *server) processPipeline() {
@@ -69,10 +63,12 @@ func (server *server) processPipeline() {
 	}
 }
 
-func (server *server) createBasicRoutes() {
-	server.router = mux.NewRouter()
-	server.router.HandleFunc("/", server.helloWorldHandler)
-	server.router.HandleFunc("/order", server.addNewOrder).Methods("POST")
+func (server *server) createBasicRoutes() *mux.Router {
+	router := mux.NewRouter()
+	router.HandleFunc("/", server.helloWorldHandler)
+	router.HandleFunc("/order", server.addNewOrder).Methods("POST")
+
+	return router
 }
 
 func (server *server) helloWorldHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,16 +78,18 @@ func (server *server) helloWorldHandler(w http.ResponseWriter, r *http.Request) 
 
 func (server *server) addNewOrder(w http.ResponseWriter, req *http.Request) {
 	server.pipeline <- "POST of new order"
-	decoder := json.NewDecoder(req.Body)
 	var order models.Order
-	err := decoder.Decode(&order)
+	err := json.NewDecoder(req.Body).Decode(&order)
 	if err != nil {
-		panic(err)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("invalid json"))
+		return
 	}
 
 	err = server.db.AddOrder(order)
 	var message = "Successfully added order : %s"
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		message = "Error while adding order : %s " + err.Error()
 	}
 	message = fmt.Sprintf(message, order.AwbNumber)

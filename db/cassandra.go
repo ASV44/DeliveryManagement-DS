@@ -1,8 +1,8 @@
 package db
 
 import (
-	"../models"
 	"fmt"
+	"github.com/ASV44/DeliveryManagement-DS/models"
 	"github.com/gocql/gocql"
 )
 

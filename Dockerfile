@@ -13,7 +13,7 @@ ENV WORKDIR ${GOPATH}/${APP}
 
 RUN apk update && apk add --no-cache git
 
-COPY . $WORKDIR
+COPY warehouse $WORKDIR
 WORKDIR $WORKDIR
 
 # Fetch dependencies.

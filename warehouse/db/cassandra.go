@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/ASV44/DeliveryManagement-DS/models"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/gocql/gocql"
 )
 
@@ -22,18 +22,15 @@ func (db *Cassandra) ConnectToCluster() {
 	db.cluster.Port = 9042
 	db.cluster.Keyspace = KEYSPACE
 	db.cluster.Consistency = gocql.Quorum
-	db.session, _ = db.cluster.CreateSession()
 	db.initSession()
 }
 
 func (db *Cassandra) initSession() {
 	var err error
-	if db.session == nil || db.session.Closed() {
-		db.session, err = db.cluster.CreateSession()
-		db.session.Close()
-	}
+	db.session, err = db.cluster.CreateSession()
 	if err != nil {
 		fmt.Println(err)
+		db.session.Close()
 	} else {
 		fmt.Println("Connected to Cassandra! Init done!")
 	}
@@ -43,12 +40,12 @@ func (db *Cassandra) AddOrder(order models.Order) error {
 	err := db.session.Query(
 		`INSERT INTO orders(order_id, awb_number, allow_open_parcel,
 								  created_date, labels, latitude, longitude,
-								  service_payment, receiver_address, 
+								  service_payment, receiver_address,
 								  receiver_address_locality, receiver_contact,
 								  receiver_name, receiver_phone, shipper_address,
 								  shipper_address_locality, shipper_contact,
 								  shipper_name, shipper_phone, status_group_id,
-								  today_important) 
+								  today_important)
 			   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			   order.Id, order.AwbNumber, order.AllowOpenParcel, order.CreatedDate,
 			   order.Labels, order.Latitude, order.Longitude, order.ServicePayment,

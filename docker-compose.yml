@@ -2,7 +2,9 @@ version: "3"
 services:
 
   warehouse:
-    build: ./warehouse
+    build:
+      context: .
+      dockerfile: warehouse/Dockerfile
     ports:
       - "8080:8080"
     environment:

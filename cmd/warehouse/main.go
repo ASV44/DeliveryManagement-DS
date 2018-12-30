@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/ASV44/DeliveryManagement-DS/db"
-	"github.com/ASV44/DeliveryManagement-DS/server"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/db"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/server"
 )
 import "os"
 

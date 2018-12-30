@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ASV44/DeliveryManagement-DS/db"
-	"github.com/ASV44/DeliveryManagement-DS/models"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/db"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -82,7 +82,7 @@ func (server *server) addNewOrder(w http.ResponseWriter, req *http.Request) {
 	err := json.NewDecoder(req.Body).Decode(&order)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("invalid json"))
+		io.WriteString(w, "invalid json")
 		return
 	}
 
@@ -93,6 +93,6 @@ func (server *server) addNewOrder(w http.ResponseWriter, req *http.Request) {
 		message = "Error while adding order : %s " + err.Error()
 	}
 	message = fmt.Sprintf(message, order.AwbNumber)
-	fmt.Println(message)
+	server.pipeline <- message
 	io.WriteString(w, message)
 }

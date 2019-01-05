@@ -2,43 +2,68 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/db"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/server"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type OrdersHandler struct {
-	db       *db.Cassandra
-	pipeline *server.Pipeline
+	serverHandler *ServerHandler
+	db            *db.Cassandra
+	pipeline      *server.Pipeline
 }
 
-func NewOrdersHandler(db *db.Cassandra, pipeline *server.Pipeline) *OrdersHandler {
+func NewOrdersHandler(serverHandler *ServerHandler, db *db.Cassandra, pipeline *server.Pipeline) *OrdersHandler {
 	return &OrdersHandler{
-		db: db,
-		pipeline: pipeline,
+		serverHandler: serverHandler,
+		db:            db,
+		pipeline:      pipeline,
 	}
 }
 
 func (handler *OrdersHandler) AddNewOrder(w http.ResponseWriter, req *http.Request) {
-	handler.pipeline.Log <- "POST of new order"
+	handler.pipeline.Log <- server.PostNewOrder
 	var order models.Order
 	err := json.NewDecoder(req.Body).Decode(&order)
+
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		io.WriteString(w, "invalid json")
+		handler.onError(w, http.StatusBadRequest, server.InvalidJSONDecoding, err)
 		return
 	}
 
 	err = handler.db.AddOrder(order)
-	var message = "Successfully added order : %s"
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		message = "Error while adding order : %s " + err.Error()
+		handler.onError(w, http.StatusInternalServerError, server.OrderAddFailed+order.AwbNumber, err)
+		return
 	}
-	message = fmt.Sprintf(message, order.AwbNumber)
+
+	message := server.OrderAdded + order.AwbNumber
 	handler.pipeline.Log <- message
 	io.WriteString(w, message)
+}
+
+func (handler *OrdersHandler) GetAllOrders(w http.ResponseWriter, req *http.Request) {
+	handler.pipeline.Log <- server.GetOrders
+	orders := handler.db.GetAllOrders()
+	jsonData, err := json.Marshal(models.Orders{Orders: orders})
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
+		return
+	}
+	length, err := w.Write(jsonData)
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		return
+	}
+	handler.pipeline.Log <- strconv.Itoa(length)
+}
+
+func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message string, err error) {
+	e := models.ServerError{Status: status,
+		ClientErrorMessage: message,
+		Error:              err}
+	handler.serverHandler.HandleError(w, e)
 }

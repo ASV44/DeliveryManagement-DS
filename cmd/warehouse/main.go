@@ -12,7 +12,9 @@ func main() {
 	cassandra := &db.Cassandra{}
 	cassandra.ConnectToCluster()
 	pipeline := server.InitPipeline()
-	serverRouter := router.New(handlers.NewServerHandler(pipeline), handlers.NewOrdersHandler(cassandra, pipeline))
+	serverHandler := handlers.NewServerHandler(pipeline)
+	ordersHandler := handlers.NewOrdersHandler(serverHandler, cassandra, pipeline)
+	serverRouter := router.New(serverHandler, ordersHandler)
 	instance := server.New("", os.Getenv("PORT"), pipeline, serverRouter, cassandra)
 	instance.Start()
 }

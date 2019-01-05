@@ -1,9 +1,10 @@
+#!/usr/bin/env bash
 KEYSPACE="delivery_management"
 REPLICATION_FACTOR=3
 TABLE="orders"
 CQL="CREATE KEYSPACE IF NOT EXISTS $KEYSPACE WITH replication = {'class' : 'SimpleStrategy','replication_factor' : $REPLICATION_FACTOR};
      CREATE TABLE IF NOT EXISTS $KEYSPACE.$TABLE (
-        order_id text,
+            order_id text,
      		awb_number text,
      		allow_open_parcel boolean,
      		created_date timestamp,

@@ -24,3 +24,7 @@ type Order struct {
 	StatusGroupId           int       `json:"statusGroupId"`
 	TodayImportant          bool      `json:"todayImportant"`
 }
+
+func (order Order) IsEmpty() bool {
+	return order.Id == "" && order.Labels == nil
+}

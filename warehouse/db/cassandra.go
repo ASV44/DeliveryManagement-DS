@@ -2,9 +2,9 @@ package db
 
 import (
 	"fmt"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/mappers"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/gocql/gocql"
-	"time"
 )
 
 const (
@@ -65,30 +65,20 @@ func (db *Cassandra) GetAllOrders() []models.Order {
 
 	iter := db.session.Query("SELECT * FROM orders").Iter()
 	for iter.MapScan(data) {
-		orders = append(orders, models.Order{
-			Id:                      data["order_id"].(string),
-			AwbNumber:               data["awb_number"].(string),
-			AllowOpenParcel:         data["allow_open_parcel"].(bool),
-			CreatedDate:             data["created_date"].(time.Time),
-			Labels:                  data["labels"].([]string),
-			Latitude:                data["latitude"].(float64),
-			Longitude:               data["longitude"].(float64),
-			ServicePayment:          data["service_payment"].(float64),
-			ReceiverAddress:         data["receiver_address"].(string),
-			ReceiverAddressLocality: data["receiver_address_locality"].(string),
-			ReceiverContact:         data["receiver_contact"].(string),
-			ReceiverName:            data["receiver_name"].(string),
-			ReceiverPhone:           data["receiver_phone"].(string),
-			ShipperAddress:          data["shipper_address"].(string),
-			ShipperAddressLocality:  data["shipper_address_locality"].(string),
-			ShipperContact:          data["shipper_contact"].(string),
-			ShipperName:             data["shipper_name"].(string),
-			ShipperPhone:            data["shipper_phone"].(string),
-			StatusGroupId:           data["status_group_id"].(int),
-			TodayImportant:          data["today_important"].(bool),
-		})
+		orders = append(orders, mappers.DataToOrder(data))
 		data = make(map[string]interface{})
 	}
 
 	return orders
+}
+
+func (db *Cassandra) GetOrdersById(id string) (models.Order, error) {
+	var order models.Order
+	data := make(map[string]interface{})
+	err := db.session.Query(`SELECT * FROM orders WHERE order_id = ? LIMIT 1 ALLOW FILTERING`, id).MapScan(data)
+	if len(data) != 0 {
+		order = mappers.DataToOrder(data)
+	}
+
+	return order, err
 }

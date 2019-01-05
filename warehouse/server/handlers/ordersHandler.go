@@ -5,6 +5,7 @@ import (
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/db"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/server"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"strconv"
@@ -59,6 +60,28 @@ func (handler *OrdersHandler) GetAllOrders(w http.ResponseWriter, req *http.Requ
 		return
 	}
 	handler.pipeline.Log <- strconv.Itoa(length)
+}
+
+func (handler *OrdersHandler) GetOrderById(w http.ResponseWriter, req *http.Request) {
+	variables := mux.Vars(req)
+	id := variables["id"]
+	handler.pipeline.Log <- server.GetOrderWithId + id
+	order, err := handler.db.GetOrdersById(id)
+	if order.IsEmpty() || err != nil {
+		handler.onError(w, http.StatusNotFound, server.OrderWithIdNotFound+id, err)
+		return
+	}
+	jsonData, err := json.Marshal(order)
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
+		return
+	}
+	length, err := w.Write(jsonData)
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		return
+	}
+	handler.pipeline.Log <- server.SendOrderWithId + id + strconv.Itoa(length)
 }
 
 func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message string, err error) {

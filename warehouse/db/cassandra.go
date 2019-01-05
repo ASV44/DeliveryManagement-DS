@@ -59,11 +59,11 @@ func (db *Cassandra) AddOrder(order models.Order) error {
 	return err
 }
 
-func (db *Cassandra) GetAllOrders() []models.Order {
-	var orders []models.Order
+func (db *Cassandra) getOrdersByQuery(query *gocql.Query) []models.Order {
+	orders := make([]models.Order, 0)
 	data := make(map[string]interface{})
 
-	iter := db.session.Query("SELECT * FROM orders").Iter()
+	iter := query.Iter()
 	for iter.MapScan(data) {
 		orders = append(orders, mappers.DataToOrder(data))
 		data = make(map[string]interface{})
@@ -72,7 +72,13 @@ func (db *Cassandra) GetAllOrders() []models.Order {
 	return orders
 }
 
-func (db *Cassandra) GetOrdersById(id string) (models.Order, error) {
+func (db *Cassandra) GetAllOrders() []models.Order {
+	query := db.session.Query("SELECT * FROM orders")
+
+	return db.getOrdersByQuery(query)
+}
+
+func (db *Cassandra) GetOrderById(id string) (models.Order, error) {
 	var order models.Order
 	data := make(map[string]interface{})
 	err := db.session.Query(`SELECT * FROM orders WHERE order_id = ? LIMIT 1 ALLOW FILTERING`, id).MapScan(data)
@@ -81,4 +87,10 @@ func (db *Cassandra) GetOrdersById(id string) (models.Order, error) {
 	}
 
 	return order, err
+}
+
+func (db *Cassandra) GetOrdersByAWB(awbNumber string) []models.Order {
+	query := db.session.Query("SELECT * FROM orders WHERE awb_number = ? ALLOW FILTERING", awbNumber)
+
+	return db.getOrdersByQuery(query)
 }

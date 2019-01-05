@@ -66,7 +66,7 @@ func (handler *OrdersHandler) GetOrderById(w http.ResponseWriter, req *http.Requ
 	variables := mux.Vars(req)
 	id := variables["id"]
 	handler.pipeline.Log <- server.GetOrderWithId + id
-	order, err := handler.db.GetOrdersById(id)
+	order, err := handler.db.GetOrderById(id)
 	if order.IsEmpty() || err != nil {
 		handler.onError(w, http.StatusNotFound, server.OrderWithIdNotFound+id, err)
 		return
@@ -82,6 +82,24 @@ func (handler *OrdersHandler) GetOrderById(w http.ResponseWriter, req *http.Requ
 		return
 	}
 	handler.pipeline.Log <- server.SendOrderWithId + id + strconv.Itoa(length)
+}
+
+func (handler *OrdersHandler) GetOrdersByAWB(w http.ResponseWriter, req *http.Request) {
+	variables := mux.Vars(req)
+	awbNumber := variables["awb_number"]
+	handler.pipeline.Log <- server.GetSpecificAWBOrders + awbNumber
+	orders := handler.db.GetOrdersByAWB(awbNumber)
+	jsonData, err := json.Marshal(models.Orders{Orders: orders})
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
+		return
+	}
+	length, err := w.Write(jsonData)
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		return
+	}
+	handler.pipeline.Log <- server.SendSpecificAWBOrders + awbNumber + strconv.Itoa(length)
 }
 
 func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message string, err error) {

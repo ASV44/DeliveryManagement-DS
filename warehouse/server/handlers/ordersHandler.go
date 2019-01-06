@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/db"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/mappers"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
@@ -42,9 +43,8 @@ func (handler *OrdersHandler) AddNewOrder(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	message := server.OrderAdded + order.AwbNumber
-	handler.pipeline.Log <- message
-	io.WriteString(w, message)
+	handler.pipeline.Log <- server.OrderAdded + order.AwbNumber
+	io.WriteString(w, server.OrderAdded+order.AwbNumber)
 }
 
 func (handler *OrdersHandler) RegisterNewOrders(w http.ResponseWriter, req *http.Request) {
@@ -59,13 +59,12 @@ func (handler *OrdersHandler) RegisterNewOrders(w http.ResponseWriter, req *http
 
 	insertErrors := handler.db.RegisterNewOrders(orders.Orders)
 	if insertErrors != nil {
-		handler.serverHandler.HandleInsertErrors(w, insertErrors)
+		handler.onErrors(w, insertErrors, server.OrdersRegisterFailed, server.OrdersRegisterFailedLog)
 		return
 	}
 
-	message := server.RegisterMultipleOrders
-	handler.pipeline.Log <- message
-	io.WriteString(w, message)
+	handler.pipeline.Log <- server.RegisterMultipleOrders
+	io.WriteString(w, server.RegisterMultipleOrders)
 }
 
 func (handler *OrdersHandler) GetAllOrders(w http.ResponseWriter, req *http.Request) {
@@ -126,10 +125,6 @@ func (handler *OrdersHandler) GetOrdersByAWB(w http.ResponseWriter, req *http.Re
 	handler.pipeline.Log <- strconv.Itoa(length)
 }
 
-func (handler *OrdersHandler) DeleteOrder(w http.ResponseWriter, req *http.Request) {
-
-}
-
 func (handler *OrdersHandler) UpdateOrder(w http.ResponseWriter, req *http.Request) {
 	variables := mux.Vars(req)
 	id := variables["id"]
@@ -154,9 +149,51 @@ func (handler *OrdersHandler) UpdateOrder(w http.ResponseWriter, req *http.Reque
 	handler.pipeline.Log <- strconv.Itoa(length)
 }
 
+func (handler *OrdersHandler) DeleteOrder(w http.ResponseWriter, req *http.Request) {
+	variables := mux.Vars(req)
+	id := variables["id"]
+	handler.pipeline.Log <- server.DeleteOrderRequest + id
+	err := handler.db.DeleteOrder(id)
+
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.OrderDeleteFailed+id, err)
+		return
+	}
+
+	handler.pipeline.Log <- server.OrderDeleted + id
+	io.WriteString(w, server.OrderDeleted+id)
+}
+
+func (handler *OrdersHandler) DeleteMultipleOrder(w http.ResponseWriter, req *http.Request) {
+	values := req.URL.Query()
+
+	if _, ok := values["id"]; !ok {
+		handler.onError(w, http.StatusBadRequest, server.OrdersIdNotPresent, errors.New(server.IncorrectUrl))
+		return
+	}
+
+	amount := strconv.Itoa(len(values["id"]))
+	handler.pipeline.Log <- server.DeleteMultipleOrders + amount
+	err := handler.db.DeleteMultipleOrder(values["id"])
+
+	if err != nil {
+		amount = strconv.Itoa(len(err))
+		handler.onErrors(w, err, server.OrderDeleteFailed+amount, server.OrdersDeleteFailedLog)
+		return
+	}
+
+	handler.pipeline.Log <- server.MultipleOrderDeleted + amount
+	io.WriteString(w, server.MultipleOrderDeleted+amount)
+}
+
 func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message string, err error) {
 	e := models.ServerError{Status: status,
 		ClientErrorMessage: message,
 		Error:              err.Error()}
 	handler.serverHandler.HandleError(w, e)
+}
+
+func (handler *OrdersHandler) onErrors(w http.ResponseWriter, orderErrors []models.OrderError,
+	mainLog string, errorLog string) {
+	handler.serverHandler.HandleOrdersErrors(w, orderErrors, mainLog, errorLog)
 }

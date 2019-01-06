@@ -21,7 +21,9 @@ func addOrdersRoutesHandlers(router *mux.Router, handler *handlers.OrdersHandler
 	router.HandleFunc("/order", handler.AddNewOrder).Methods("POST")
 	router.HandleFunc("/order/{id}", handler.GetOrderById).Methods("GET")
 	router.HandleFunc("/order/{id}", handler.UpdateOrder).Methods("PUT")
+	router.HandleFunc("/order/{id}", handler.DeleteOrder).Methods("DELETE")
 	router.HandleFunc("/orders", handler.RegisterNewOrders).Methods("POST")
 	router.HandleFunc("/orders", handler.GetAllOrders).Methods("GET")
 	router.HandleFunc("/orders/{awb_number}", handler.GetOrdersByAWB).Methods("GET")
+	router.HandleFunc("/orders", handler.DeleteMultipleOrder).Methods("DELETE")
 }

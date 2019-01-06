@@ -35,10 +35,11 @@ func (handler *ServerHandler) HandleError(w http.ResponseWriter, serverError mod
 	handler.pipeline.Log <- fmt.Sprintf(server.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error)
 }
 
-func (handler *ServerHandler) HandleInsertErrors(w http.ResponseWriter, insertErrors []models.InsertError) {
+func (handler *ServerHandler) HandleOrdersErrors(w http.ResponseWriter, orderErrors []models.OrderError,
+	mainLog string, errorLog string) {
 	w.WriteHeader(http.StatusInternalServerError)
-	jsonData, _ := json.Marshal(insertErrors)
+	jsonData, _ := json.Marshal(models.OrderErrors{Errors: orderErrors})
 	_, _ = w.Write(jsonData)
-	handler.pipeline.Log <- server.OrdersRegisterFailed
-	handler.pipeline.Log <- mappers.InsertErrorsToLog(insertErrors, server.OrdersRegisterFailedLog)
+	handler.pipeline.Log <- mainLog
+	handler.pipeline.Log <- mappers.OrderErrorsToLog(orderErrors, errorLog)
 }

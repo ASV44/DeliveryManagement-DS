@@ -14,4 +14,8 @@ const (
 	RegisterMultipleOrders = "Successfully insert multiple orders"
 	UpdateOrderRequest     = "PUT request for update of order with id : "
 	UpdatedOrderWithId     = "Successfully updated order with ID : "
+	DeleteOrderRequest     = "DELETE request for order with ID : "
+	OrderDeleted           = "Deleted order with ID : "
+	DeleteMultipleOrders   = "DELETE request for multiple orders : "
+	MultipleOrderDeleted   = "Successfully deleted multiple orders : "
 )

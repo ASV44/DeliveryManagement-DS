@@ -62,14 +62,13 @@ func (db *Cassandra) AddOrder(order models.Order) error {
 	return err
 }
 
-func (db *Cassandra) RegisterNewOrders(order []models.Order) []models.InsertError {
-	var errors []models.InsertError = nil
+func (db *Cassandra) RegisterNewOrders(order []models.Order) []models.OrderError {
+	var errors []models.OrderError = nil
 	for _, element := range order {
 		err := db.AddOrder(element)
 		if err != nil {
-			errors = append(errors, models.InsertError{Error: err.Error(),
-				OrderID:        element.Id,
-				OrderAwbNumber: element.AwbNumber})
+			errors = append(errors, models.OrderError{Error: err.Error(),
+				OrderID: element.Id})
 		}
 	}
 
@@ -121,4 +120,25 @@ func (db *Cassandra) UpdateOrderById(id string, values map[string]string) error 
 	err := db.session.ExecuteBatch(batch)
 
 	return err
+}
+
+func (db *Cassandra) DeleteOrder(id string) error {
+	err := db.session.Query(DeleteOrderWithId, id).Exec()
+
+	return err
+}
+
+func (db *Cassandra) DeleteMultipleOrder(idList []string) []models.OrderError {
+	var errors []models.OrderError = nil
+	for _, id := range idList {
+		err := db.DeleteOrder(id)
+		if err != nil {
+			errors = append(errors, models.OrderError{
+				Error:   err.Error(),
+				OrderID: id,
+			})
+		}
+	}
+
+	return errors
 }

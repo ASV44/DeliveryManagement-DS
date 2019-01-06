@@ -1,6 +1,8 @@
 package server
 
 const (
+	GetRequestToRoot       = "request on '/' route"
+	WelcomeMessage         = "Delivery Management Distributed System ~DS\n"
 	PostNewOrder           = "POST of new order"
 	OrderAdded             = "Successfully added order : "
 	GetOrders              = "GET all orders"
@@ -10,4 +12,6 @@ const (
 	SendSpecificAWBOrders  = "Successfully send orders AWB : "
 	PostNewOrders          = "POST of new multiple orders : "
 	RegisterMultipleOrders = "Successfully insert multiple orders"
+	UpdateOrderRequest     = "PUT request for update of order with id : "
+	UpdatedOrderWithId     = "Successfully updated order with ID : "
 )

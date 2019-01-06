@@ -9,4 +9,5 @@ const (
 	OrderWithIdNotFound     = "Order with requested Id Not found : "
 	OrdersRegisterFailed    = "Insertion of orders failed : "
 	OrdersRegisterFailedLog = "Order %s / %s insertion failed. Reason %s"
+	OrderUpdateFailed       = "Update of order failed : "
 )

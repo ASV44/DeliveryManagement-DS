@@ -22,16 +22,17 @@ func NewServerHandler(pipeline *server.Pipeline) *ServerHandler {
 }
 
 func (handler *ServerHandler) RootHandler(w http.ResponseWriter, r *http.Request) {
-	handler.pipeline.Log <- "request on '/' route"
+	handler.pipeline.Log <- server.GetRequestToRoot
 	currentTime := time.Now()
-	io.WriteString(w, "Delivery Management Distributed System ~DS\n")
+	io.WriteString(w, server.WelcomeMessage)
 	io.WriteString(w, currentTime.Format("2006-01-02 15:04:05"))
 }
 
 func (handler *ServerHandler) HandleError(w http.ResponseWriter, serverError models.ServerError) {
 	w.WriteHeader(serverError.Status)
-	io.WriteString(w, serverError.ClientErrorMessage)
-	handler.pipeline.Log <- fmt.Sprintf(server.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error.Error())
+	jsonData, _ := json.Marshal(serverError)
+	_, _ = w.Write(jsonData)
+	handler.pipeline.Log <- fmt.Sprintf(server.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error)
 }
 
 func (handler *ServerHandler) HandleInsertErrors(w http.ResponseWriter, insertErrors []models.InsertError) {

@@ -111,3 +111,14 @@ func (db *Cassandra) GetOrdersByAWB(awbNumber string) []models.Order {
 
 	return db.getOrdersByQuery(query)
 }
+
+func (db *Cassandra) UpdateOrderById(id string, values map[string]string) error {
+	batch := db.session.NewBatch(gocql.LoggedBatch)
+	for column, value := range values {
+		query := SetUpdateColumn(UpdateOrderWithId, column)
+		batch.Query(query, value, id)
+	}
+	err := db.session.ExecuteBatch(batch)
+
+	return err
+}

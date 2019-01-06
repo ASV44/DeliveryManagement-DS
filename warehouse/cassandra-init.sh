@@ -24,7 +24,7 @@ CQL="CREATE KEYSPACE IF NOT EXISTS $KEYSPACE WITH replication = {'class' : 'Simp
      		shipper_phone text,
      		status_group_id int,
      		today_important boolean,
-     		PRIMARY KEY ((order_id, awb_number), created_date));"
+     		PRIMARY KEY (order_id));"
 
 until echo $CQL | cqlsh
  do

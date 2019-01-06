@@ -2,6 +2,8 @@ package mappers
 
 import (
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
+	"regexp"
+	"strings"
 	"time"
 )
 
@@ -28,4 +30,14 @@ func DataToOrder(data map[string]interface{}) models.Order {
 		StatusGroupId:           data["status_group_id"].(int),
 		TodayImportant:          data["today_important"].(bool),
 	}
+}
+
+func FieldToOrderColumn(field string) string {
+	if field == "id" {
+		field = "orderId"
+	}
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	snake := matchAllCap.ReplaceAllString(field, "${1}_${2}")
+
+	return strings.ToLower(snake)
 }

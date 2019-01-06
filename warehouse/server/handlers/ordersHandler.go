@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/db"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/mappers"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/server"
 	"github.com/gorilla/mux"
@@ -50,7 +51,7 @@ func (handler *OrdersHandler) RegisterNewOrders(w http.ResponseWriter, req *http
 	var orders models.Orders
 	err := json.NewDecoder(req.Body).Decode(&orders)
 
-	if err != nil {
+	if orders.Orders == nil || err != nil {
 		handler.onError(w, http.StatusBadRequest, server.InvalidJSONDecoding, err)
 		return
 	}
@@ -102,7 +103,8 @@ func (handler *OrdersHandler) GetOrderById(w http.ResponseWriter, req *http.Requ
 		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
 		return
 	}
-	handler.pipeline.Log <- server.SendOrderWithId + id + strconv.Itoa(length)
+	handler.pipeline.Log <- server.SendOrderWithId + id
+	handler.pipeline.Log <- strconv.Itoa(length)
 }
 
 func (handler *OrdersHandler) GetOrdersByAWB(w http.ResponseWriter, req *http.Request) {
@@ -120,12 +122,41 @@ func (handler *OrdersHandler) GetOrdersByAWB(w http.ResponseWriter, req *http.Re
 		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
 		return
 	}
-	handler.pipeline.Log <- server.SendSpecificAWBOrders + awbNumber + strconv.Itoa(length)
+	handler.pipeline.Log <- server.SendSpecificAWBOrders + awbNumber
+	handler.pipeline.Log <- strconv.Itoa(length)
+}
+
+func (handler *OrdersHandler) DeleteOrder(w http.ResponseWriter, req *http.Request) {
+
+}
+
+func (handler *OrdersHandler) UpdateOrder(w http.ResponseWriter, req *http.Request) {
+	variables := mux.Vars(req)
+	id := variables["id"]
+	handler.pipeline.Log <- server.UpdateOrderRequest + id
+	values := mappers.UrlQueryToMap(req.URL.Query(), mappers.FieldToOrderColumn)
+	err := handler.db.UpdateOrderById(id, values)
+
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.OrderUpdateFailed+id, err)
+		return
+	}
+
+	order, _ := handler.db.GetOrderById(id)
+	jsonData, _ := json.Marshal(order)
+	length, err := w.Write(jsonData)
+
+	if err != nil {
+		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		return
+	}
+	handler.pipeline.Log <- server.UpdatedOrderWithId + id
+	handler.pipeline.Log <- strconv.Itoa(length)
 }
 
 func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message string, err error) {
 	e := models.ServerError{Status: status,
 		ClientErrorMessage: message,
-		Error:              err}
+		Error:              err.Error()}
 	handler.serverHandler.HandleError(w, e)
 }

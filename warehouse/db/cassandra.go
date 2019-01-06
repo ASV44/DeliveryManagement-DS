@@ -38,25 +38,42 @@ func (db *Cassandra) initSession() {
 }
 
 func (db *Cassandra) AddOrder(order models.Order) error {
-	err := db.session.Query(
-		`INSERT INTO orders(order_id, awb_number, allow_open_parcel,
-								  created_date, labels, latitude, longitude,
-								  service_payment, receiver_address,
-								  receiver_address_locality, receiver_contact,
-								  receiver_name, receiver_phone, shipper_address,
-								  shipper_address_locality, shipper_contact,
-								  shipper_name, shipper_phone, status_group_id,
-								  today_important)
-			   VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		order.Id, order.AwbNumber, order.AllowOpenParcel, order.CreatedDate,
-		order.Labels, order.Latitude, order.Longitude, order.ServicePayment,
-		order.ReceiverAddress, order.ReceiverAddressLocality, order.ReceiverContact,
-		order.ReceiverName, order.ReceiverPhone, order.ShipperAddress,
-		order.ShipperAddressLocality, order.ShipperContact,
-		order.ShipperName, order.ShipperPhone, order.StatusGroupId,
+	err := db.session.Query(InsertOrder, order.Id,
+		order.AwbNumber,
+		order.AllowOpenParcel,
+		order.CreatedDate,
+		order.Labels,
+		order.Latitude,
+		order.Longitude,
+		order.ServicePayment,
+		order.ReceiverAddress,
+		order.ReceiverAddressLocality,
+		order.ReceiverContact,
+		order.ReceiverName,
+		order.ReceiverPhone,
+		order.ShipperAddress,
+		order.ShipperAddressLocality,
+		order.ShipperContact,
+		order.ShipperName,
+		order.ShipperPhone,
+		order.StatusGroupId,
 		order.TodayImportant).Exec()
 
 	return err
+}
+
+func (db *Cassandra) RegisterNewOrders(order []models.Order) []models.InsertError {
+	var errors []models.InsertError = nil
+	for _, element := range order {
+		err := db.AddOrder(element)
+		if err != nil {
+			errors = append(errors, models.InsertError{Error: err.Error(),
+				OrderID:        element.Id,
+				OrderAwbNumber: element.AwbNumber})
+		}
+	}
+
+	return errors
 }
 
 func (db *Cassandra) getOrdersByQuery(query *gocql.Query) []models.Order {
@@ -73,7 +90,7 @@ func (db *Cassandra) getOrdersByQuery(query *gocql.Query) []models.Order {
 }
 
 func (db *Cassandra) GetAllOrders() []models.Order {
-	query := db.session.Query("SELECT * FROM orders")
+	query := db.session.Query(GetAllOrders)
 
 	return db.getOrdersByQuery(query)
 }
@@ -81,7 +98,7 @@ func (db *Cassandra) GetAllOrders() []models.Order {
 func (db *Cassandra) GetOrderById(id string) (models.Order, error) {
 	var order models.Order
 	data := make(map[string]interface{})
-	err := db.session.Query(`SELECT * FROM orders WHERE order_id = ? LIMIT 1 ALLOW FILTERING`, id).MapScan(data)
+	err := db.session.Query(GetOrderById, id).MapScan(data)
 	if len(data) != 0 {
 		order = mappers.DataToOrder(data)
 	}
@@ -90,7 +107,7 @@ func (db *Cassandra) GetOrderById(id string) (models.Order, error) {
 }
 
 func (db *Cassandra) GetOrdersByAWB(awbNumber string) []models.Order {
-	query := db.session.Query("SELECT * FROM orders WHERE awb_number = ? ALLOW FILTERING", awbNumber)
+	query := db.session.Query(GetOrdersByAwb, awbNumber)
 
 	return db.getOrdersByQuery(query)
 }

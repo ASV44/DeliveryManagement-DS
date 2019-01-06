@@ -30,7 +30,7 @@ func (handler *OrdersHandler) AddNewOrder(w http.ResponseWriter, req *http.Reque
 	var order models.Order
 	err := json.NewDecoder(req.Body).Decode(&order)
 
-	if err != nil {
+	if order.IsEmpty() || err != nil {
 		handler.onError(w, http.StatusBadRequest, server.InvalidJSONDecoding, err)
 		return
 	}
@@ -42,6 +42,27 @@ func (handler *OrdersHandler) AddNewOrder(w http.ResponseWriter, req *http.Reque
 	}
 
 	message := server.OrderAdded + order.AwbNumber
+	handler.pipeline.Log <- message
+	io.WriteString(w, message)
+}
+
+func (handler *OrdersHandler) RegisterNewOrders(w http.ResponseWriter, req *http.Request) {
+	var orders models.Orders
+	err := json.NewDecoder(req.Body).Decode(&orders)
+
+	if err != nil {
+		handler.onError(w, http.StatusBadRequest, server.InvalidJSONDecoding, err)
+		return
+	}
+	handler.pipeline.Log <- server.PostNewOrders + strconv.Itoa(len(orders.Orders))
+
+	insertErrors := handler.db.RegisterNewOrders(orders.Orders)
+	if insertErrors != nil {
+		handler.serverHandler.HandleInsertErrors(w, insertErrors)
+		return
+	}
+
+	message := server.RegisterMultipleOrders
 	handler.pipeline.Log <- message
 	io.WriteString(w, message)
 }

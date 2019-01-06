@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/ASV44/DeliveryManagement-DS/warehouse/mappers"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/models"
 	"github.com/ASV44/DeliveryManagement-DS/warehouse/server"
 	"io"
@@ -30,4 +32,12 @@ func (handler *ServerHandler) HandleError(w http.ResponseWriter, serverError mod
 	w.WriteHeader(serverError.Status)
 	io.WriteString(w, serverError.ClientErrorMessage)
 	handler.pipeline.Log <- fmt.Sprintf(server.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error.Error())
+}
+
+func (handler *ServerHandler) HandleInsertErrors(w http.ResponseWriter, insertErrors []models.InsertError) {
+	w.WriteHeader(http.StatusInternalServerError)
+	jsonData, _ := json.Marshal(insertErrors)
+	_, _ = w.Write(jsonData)
+	handler.pipeline.Log <- server.OrdersRegisterFailed
+	handler.pipeline.Log <- mappers.InsertErrorsToLog(insertErrors, server.OrdersRegisterFailedLog)
 }

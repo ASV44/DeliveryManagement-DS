@@ -7,7 +7,7 @@ FROM golang:alpine AS builder
 # Set environment variables
 
 ENV APP DeliveryManagement-DS
-ENV SERVICE warehouse
+ENV SERVICE proxy
 ENV WORKDIR ${GOPATH}/src/github.com/ASV44/${APP}
 
 # Install git.
@@ -43,7 +43,7 @@ RUN go build -v -o /go/bin/main cmd/$SERVICE/main.go
 
 # COPY --from=builder /go/bin/main /go/bin/main
 
-ENV PORT=8080
+ENV PORT=8000
 EXPOSE $PORT
 
 

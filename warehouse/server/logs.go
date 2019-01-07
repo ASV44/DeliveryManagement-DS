@@ -1,8 +1,9 @@
 package server
 
 const (
-	GetRequestToRoot       = "request on '/' route"
-	WelcomeMessage         = "Delivery Management Distributed System ~DS\n"
+	GetRequestToRoot       = "GET request on '/' route"
+	WelcomeMessage         = "Delivery Management Distributed System ~DS Warehouse is running\n"
+	TimeMessage            = "Warehouse Time: "
 	PostNewOrder           = "POST of new order"
 	OrderAdded             = "Successfully added order : "
 	GetOrders              = "GET all orders"

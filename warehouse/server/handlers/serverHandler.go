@@ -23,9 +23,8 @@ func NewServerHandler(pipeline *server.Pipeline) *ServerHandler {
 
 func (handler *ServerHandler) RootHandler(w http.ResponseWriter, r *http.Request) {
 	handler.pipeline.Log <- server.GetRequestToRoot
-	currentTime := time.Now()
-	io.WriteString(w, server.WelcomeMessage)
-	io.WriteString(w, currentTime.Format("2006-01-02 15:04:05"))
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	io.WriteString(w, server.WelcomeMessage+server.TimeMessage+currentTime)
 }
 
 func (handler *ServerHandler) HandleError(w http.ResponseWriter, serverError models.ServerError) {

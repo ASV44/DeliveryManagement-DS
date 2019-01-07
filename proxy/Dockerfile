@@ -19,7 +19,14 @@ RUN apk update && apk add --no-cache git
 
 COPY cmd/$SERVICE $WORKDIR/cmd/$SERVICE
 COPY $SERVICE $WORKDIR/$SERVICE/
-COPY Gopkg.toml Gopkg.lock $WORKDIR/
+
+#Copy dependecies list files
+
+COPY $SERVICE/Gopkg.toml $WORKDIR/
+COPY $SERVICE/Gopkg.lock $WORKDIR/
+
+#Change container work directory
+
 WORKDIR $WORKDIR
 
 # Fetch dependencies.

@@ -16,7 +16,7 @@ const (
 type server struct {
 	host     string
 	port     string
-	router	 *mux.Router
+	router   *mux.Router
 	pipeline *Pipeline
 	db       *db.Cassandra
 }
@@ -45,9 +45,9 @@ func (server *server) Start() {
 
 func (server *server) run(router *mux.Router) {
 	server.pipeline.Log <- "warehouse is running on port : " + server.port
-	var err = http.ListenAndServe(":" + server.port, router)
+	var err = http.ListenAndServe(":"+server.port, router)
 	if err != nil {
-		fmt.Println(err)
+		server.pipeline.Log <- err.Error()
 		os.Exit(1)
 	}
 }

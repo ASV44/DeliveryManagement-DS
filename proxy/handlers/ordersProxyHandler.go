@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/ASV44/DeliveryManagement-DS/proxy"
+	"github.com/go-redis/redis"
 	"net/http"
 )
 
@@ -9,7 +10,7 @@ type OrdersProxyHandler struct {
 	pipeline *proxy.Pipeline
 }
 
-func NewOrdersProxyHandler(pipeline *proxy.Pipeline) *OrdersProxyHandler {
+func NewOrdersProxyHandler(pipeline *proxy.Pipeline, cache *redis.Client) *OrdersProxyHandler {
 	return &OrdersProxyHandler{pipeline: pipeline}
 }
 

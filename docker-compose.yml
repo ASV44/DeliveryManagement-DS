@@ -27,6 +27,16 @@ services:
       - warehouse
     restart: always
 
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - "./proxy/cache_data:/data"
+    depends_on:
+      - proxy
+    restart: always
+
   #Cassandra Cluster
   cassandraSeed:
     image: cassandra:latest

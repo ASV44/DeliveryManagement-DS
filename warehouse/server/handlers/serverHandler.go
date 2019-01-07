@@ -27,18 +27,18 @@ func (handler *ServerHandler) RootHandler(w http.ResponseWriter, r *http.Request
 	io.WriteString(w, server.WelcomeMessage+server.TimeMessage+currentTime)
 }
 
-func (handler *ServerHandler) HandleError(w http.ResponseWriter, serverError models.ServerError) {
+func HandleError(w http.ResponseWriter, pipeline *server.Pipeline, serverError models.ServerError) {
 	w.WriteHeader(serverError.Status)
 	jsonData, _ := json.Marshal(serverError)
 	_, _ = w.Write(jsonData)
-	handler.pipeline.Log <- fmt.Sprintf(server.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error)
+	pipeline.Log <- fmt.Sprintf(server.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error)
 }
 
-func (handler *ServerHandler) HandleOrdersErrors(w http.ResponseWriter, orderErrors []models.OrderError,
+func HandleOrdersErrors(w http.ResponseWriter, pipeline *server.Pipeline, orderErrors []models.OrderError,
 	mainLog string, errorLog string) {
 	w.WriteHeader(http.StatusInternalServerError)
 	jsonData, _ := json.Marshal(models.OrderErrors{Errors: orderErrors})
 	_, _ = w.Write(jsonData)
-	handler.pipeline.Log <- mainLog
-	handler.pipeline.Log <- mappers.OrderErrorsToLog(orderErrors, errorLog)
+	pipeline.Log <- mainLog
+	pipeline.Log <- mappers.OrderErrorsToLog(orderErrors, errorLog)
 }

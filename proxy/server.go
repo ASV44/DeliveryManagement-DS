@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	DefaultHost = "localhost"
-	DefaultPort = "8000"
+	DefaultHost   = "localhost"
+	DefaultPort   = "8000"
+	WarehouseHost = "http://warehouse:8080"
 )
 
 type server struct {

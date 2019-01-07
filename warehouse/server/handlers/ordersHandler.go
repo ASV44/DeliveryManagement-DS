@@ -190,10 +190,10 @@ func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message
 	e := models.ServerError{Status: status,
 		ClientErrorMessage: message,
 		Error:              err.Error()}
-	handler.serverHandler.HandleError(w, e)
+	HandleError(w, handler.pipeline, e)
 }
 
 func (handler *OrdersHandler) onErrors(w http.ResponseWriter, orderErrors []models.OrderError,
 	mainLog string, errorLog string) {
-	handler.serverHandler.HandleOrdersErrors(w, orderErrors, mainLog, errorLog)
+	HandleOrdersErrors(w, handler.pipeline, orderErrors, mainLog, errorLog)
 }

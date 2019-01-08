@@ -28,7 +28,7 @@ func (handler *ProxyServerHandler) ProxyRootHandler(w http.ResponseWriter, r *ht
 	response, err := http.Get(proxy.WarehouseHost)
 
 	if err != nil {
-		handler.OnError(w, http.StatusInternalServerError, proxy.WarehouseRequestError, err)
+		OnError(w, handler.pipeline, http.StatusInternalServerError, proxy.WarehouseRequestError, err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func (handler *ProxyServerHandler) ProxyRootHandler(w http.ResponseWriter, r *ht
 	defer response.Body.Close()
 
 	if err != nil {
-		handler.OnError(w, http.StatusInternalServerError, proxy.WarehouseInvalidResponse, err)
+		OnError(w, handler.pipeline, http.StatusInternalServerError, proxy.WarehouseInvalidResponse, err)
 		return
 	}
 
@@ -51,9 +51,9 @@ func HandleError(w http.ResponseWriter, pipeline *proxy.Pipeline, serverError mo
 	pipeline.Log <- fmt.Sprintf(proxy.SeverErrorLog, serverError.ClientErrorMessage, serverError.Error)
 }
 
-func (handler *ProxyServerHandler) OnError(w http.ResponseWriter, status int, message string, err error) {
+func OnError(w http.ResponseWriter, pipeline *proxy.Pipeline, status int, message string, err error) {
 	serverError := models.ProxyServerError{Status: status,
 		ClientErrorMessage: message,
 		Error:              err.Error()}
-	HandleError(w, handler.pipeline, serverError)
+	HandleError(w, pipeline, serverError)
 }

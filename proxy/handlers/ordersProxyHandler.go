@@ -7,19 +7,25 @@ import (
 )
 
 type OrdersProxyHandler struct {
-	pipeline *proxy.Pipeline
+	proxyRequestHandler *ProxyRequestHandler
+	pipeline            *proxy.Pipeline
+	cache               *redis.Client
 }
 
-func NewOrdersProxyHandler(pipeline *proxy.Pipeline, cache *redis.Client) *OrdersProxyHandler {
-	return &OrdersProxyHandler{pipeline: pipeline}
+func NewOrdersProxyHandler(proxyRequestHandler *ProxyRequestHandler,
+	pipeline *proxy.Pipeline,
+	cache *redis.Client) *OrdersProxyHandler {
+	return &OrdersProxyHandler{proxyRequestHandler: proxyRequestHandler,
+		pipeline: pipeline,
+		cache:    cache}
 }
 
 func (handler *OrdersProxyHandler) AddNewOrder(w http.ResponseWriter, req *http.Request) {
-
+	handler.proxyRequestHandler.forwardPostRequest(w, req, proxy.ForwardOrderPost)
 }
 
 func (handler *OrdersProxyHandler) RegisterNewOrders(w http.ResponseWriter, req *http.Request) {
-
+	handler.proxyRequestHandler.forwardPostRequest(w, req, proxy.ForwardOrdersRegister)
 }
 
 func (handler *OrdersProxyHandler) GetAllOrders(w http.ResponseWriter, req *http.Request) {

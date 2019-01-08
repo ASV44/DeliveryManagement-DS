@@ -42,3 +42,15 @@ func HandleOrdersErrors(w http.ResponseWriter, pipeline *server.Pipeline, orderE
 	pipeline.Log <- mainLog
 	pipeline.Log <- mappers.OrderErrorsToLog(orderErrors, errorLog)
 }
+
+func onError(w http.ResponseWriter, pipeline *server.Pipeline, status int, message string, err error) {
+	e := models.ServerError{Status: status,
+		ClientErrorMessage: message,
+		Error:              err.Error()}
+	HandleError(w, pipeline, e)
+}
+
+func onErrors(w http.ResponseWriter, pipeline *server.Pipeline, orderErrors []models.OrderError,
+	mainLog string, errorLog string) {
+	HandleOrdersErrors(w, pipeline, orderErrors, mainLog, errorLog)
+}

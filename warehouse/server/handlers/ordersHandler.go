@@ -33,13 +33,13 @@ func (handler *OrdersHandler) AddNewOrder(w http.ResponseWriter, req *http.Reque
 	err := json.NewDecoder(req.Body).Decode(&order)
 
 	if order.IsEmpty() || err != nil {
-		handler.onError(w, http.StatusBadRequest, server.InvalidJSONDecoding, err)
+		onError(w, handler.pipeline, http.StatusBadRequest, server.InvalidJSONDecoding, err)
 		return
 	}
 
 	err = handler.db.AddOrder(order)
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.OrderAddFailed+order.AwbNumber, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.OrderAddFailed+order.AwbNumber, err)
 		return
 	}
 
@@ -52,14 +52,14 @@ func (handler *OrdersHandler) RegisterNewOrders(w http.ResponseWriter, req *http
 	err := json.NewDecoder(req.Body).Decode(&orders)
 
 	if orders.Orders == nil || err != nil {
-		handler.onError(w, http.StatusBadRequest, server.InvalidJSONDecoding, err)
+		onError(w, handler.pipeline, http.StatusBadRequest, server.InvalidJSONDecoding, err)
 		return
 	}
 	handler.pipeline.Log <- server.PostNewOrders + strconv.Itoa(len(orders.Orders))
 
 	insertErrors := handler.db.RegisterNewOrders(orders.Orders)
 	if insertErrors != nil {
-		handler.onErrors(w, insertErrors, server.OrdersRegisterFailed, server.OrdersRegisterFailedLog)
+		onErrors(w, handler.pipeline, insertErrors, server.OrdersRegisterFailed, server.OrdersRegisterFailedLog)
 		return
 	}
 
@@ -72,12 +72,12 @@ func (handler *OrdersHandler) GetAllOrders(w http.ResponseWriter, req *http.Requ
 	orders := handler.db.GetAllOrders()
 	jsonData, err := json.Marshal(models.Orders{Orders: orders})
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
 		return
 	}
 	length, err := w.Write(jsonData)
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.DataSendFailed, err)
 		return
 	}
 	handler.pipeline.Log <- strconv.Itoa(length)
@@ -89,17 +89,17 @@ func (handler *OrdersHandler) GetOrderById(w http.ResponseWriter, req *http.Requ
 	handler.pipeline.Log <- server.GetOrderWithId + id
 	order, err := handler.db.GetOrderById(id)
 	if order.IsEmpty() || err != nil {
-		handler.onError(w, http.StatusNotFound, server.OrderWithIdNotFound+id, err)
+		onError(w, handler.pipeline, http.StatusNotFound, server.OrderWithIdNotFound+id, err)
 		return
 	}
 	jsonData, err := json.Marshal(order)
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
 		return
 	}
 	length, err := w.Write(jsonData)
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.DataSendFailed, err)
 		return
 	}
 	handler.pipeline.Log <- server.SendOrderWithId + id
@@ -113,12 +113,12 @@ func (handler *OrdersHandler) GetOrdersByAWB(w http.ResponseWriter, req *http.Re
 	orders := handler.db.GetOrdersByAWB(awbNumber)
 	jsonData, err := json.Marshal(models.Orders{Orders: orders})
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.InvalidJSONEncoding, err)
 		return
 	}
 	length, err := w.Write(jsonData)
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.DataSendFailed, err)
 		return
 	}
 	handler.pipeline.Log <- server.SendSpecificAWBOrders + awbNumber
@@ -133,7 +133,7 @@ func (handler *OrdersHandler) UpdateOrder(w http.ResponseWriter, req *http.Reque
 	err := handler.db.UpdateOrderById(id, values)
 
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.OrderUpdateFailed+id, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.OrderUpdateFailed+id, err)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (handler *OrdersHandler) UpdateOrder(w http.ResponseWriter, req *http.Reque
 	length, err := w.Write(jsonData)
 
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.DataSendFailed, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.DataSendFailed, err)
 		return
 	}
 	handler.pipeline.Log <- server.UpdatedOrderWithId + id
@@ -156,7 +156,7 @@ func (handler *OrdersHandler) DeleteOrder(w http.ResponseWriter, req *http.Reque
 	err := handler.db.DeleteOrder(id)
 
 	if err != nil {
-		handler.onError(w, http.StatusInternalServerError, server.OrderDeleteFailed+id, err)
+		onError(w, handler.pipeline, http.StatusInternalServerError, server.OrderDeleteFailed+id, err)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (handler *OrdersHandler) DeleteMultipleOrder(w http.ResponseWriter, req *ht
 	values := req.URL.Query()
 
 	if _, ok := values["id"]; !ok {
-		handler.onError(w, http.StatusBadRequest, server.OrdersIdNotPresent, errors.New(server.IncorrectUrl))
+		onError(w, handler.pipeline, http.StatusBadRequest, server.OrdersIdNotPresent, errors.New(server.IncorrectUrl))
 		return
 	}
 
@@ -178,22 +178,10 @@ func (handler *OrdersHandler) DeleteMultipleOrder(w http.ResponseWriter, req *ht
 
 	if err != nil {
 		amount = strconv.Itoa(len(err))
-		handler.onErrors(w, err, server.OrderDeleteFailed+amount, server.OrdersDeleteFailedLog)
+		onErrors(w, handler.pipeline, err, server.OrderDeleteFailed+amount, server.OrdersDeleteFailedLog)
 		return
 	}
 
 	handler.pipeline.Log <- server.MultipleOrderDeleted + amount
 	io.WriteString(w, server.MultipleOrderDeleted+amount)
-}
-
-func (handler *OrdersHandler) onError(w http.ResponseWriter, status int, message string, err error) {
-	e := models.ServerError{Status: status,
-		ClientErrorMessage: message,
-		Error:              err.Error()}
-	HandleError(w, handler.pipeline, e)
-}
-
-func (handler *OrdersHandler) onErrors(w http.ResponseWriter, orderErrors []models.OrderError,
-	mainLog string, errorLog string) {
-	HandleOrdersErrors(w, handler.pipeline, orderErrors, mainLog, errorLog)
 }

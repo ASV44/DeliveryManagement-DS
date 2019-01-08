@@ -15,10 +15,12 @@ func NewProxyRequestHandler(pipeline *proxy.Pipeline) *ProxyRequestHandler {
 	return &ProxyRequestHandler{pipeline: pipeline}
 }
 
-func (handler *ProxyRequestHandler) forwardPostRequest(w http.ResponseWriter, req *http.Request, log string) {
-	handler.pipeline.Log <- log + req.URL.Path
-	url := proxy.WarehouseHost + req.URL.Path
-	response, err := http.Post(url, req.Header.Get("Content-Type"), req.Body)
+func (handler *ProxyRequestHandler) forwardWarehouseRequest(w http.ResponseWriter, req *http.Request, log string) {
+	handler.pipeline.Log <- log + req.URL.RequestURI()
+	warehouseUrlString := proxy.WarehouseHost + req.URL.RequestURI()
+	warehouseReq, _ := http.NewRequest(req.Method, warehouseUrlString, req.Body)
+	warehouseReq.Header = req.Header
+	response, err := http.DefaultClient.Do(warehouseReq)
 
 	if err != nil {
 		OnError(w, handler.pipeline, http.StatusInternalServerError, proxy.WarehouseRequestError, err)

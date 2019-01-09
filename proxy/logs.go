@@ -14,4 +14,6 @@ const (
 	ForwardOrderGetById   = "Forwarding GET of order with ID %s : "
 	ForwardOrdersGetByAwb = "Forwarding GET of orders with AWB number %s : "
 	ForwardOrdersGet      = "Forwarding GET of all orders : "
+	DataNotFoundInCache   = "Not Found data in cache : "
+	AddDataToCache        = "Data Added to cache :"
 )
